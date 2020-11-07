@@ -16,41 +16,37 @@
 
 package higherkindness.mu.rpc.internal
 
-import java.util.concurrent.{Executor => JavaExecutor}
-
-import cats.effect.{ContextShift, Effect}
-import cats.syntax.apply._
+import cats.effect.kernel.Async
+import cats.syntax.all._
 import com.google.common.util.concurrent.{FutureCallback, Futures, ListenableFuture}
-import io.grpc.Metadata
-import io.grpc.Metadata.{ASCII_STRING_MARSHALLER, Key}
-import natchez.Kernel
+// import io.grpc.Metadata
+// import io.grpc.Metadata.{ASCII_STRING_MARSHALLER, Key}
+// import natchez.Kernel
 
 package object client {
 
   private[internal] def listenableFuture2Async[F[_], A](
       fa: => ListenableFuture[A]
-  )(implicit E: Effect[F], CS: ContextShift[F]): F[A] =
-    E.async { cb =>
-      Futures.addCallback(
-        fa,
-        new FutureCallback[A] {
-          override def onSuccess(result: A): Unit = cb(Right(result))
-
-          override def onFailure(t: Throwable): Unit = cb(Left(t))
-        },
-        new JavaExecutor {
-          override def execute(command: Runnable): Unit =
-            E.toIO(CS.shift *> E.delay(command.run())).unsafeRunSync()
+  )(implicit F: Async[F]): F[A] =
+    F.async { cb =>
+      F.executionContext.flatMap { ec =>
+        F.delay {
+          val callback = new FutureCallback[A] {
+            override def onSuccess(result: A): Unit    = cb(Right(result))
+            override def onFailure(t: Throwable): Unit = cb(Left(t))
+          }
+          Futures.addCallback(fa, callback, ec.execute(_))
+          Some(F.delay(fa.cancel(true)).void)
         }
-      )
+      }
     }
 
-  private[internal] def tracingKernelToHeaders(kernel: Kernel): Metadata = {
-    val headers = new Metadata()
-    kernel.toHeaders.foreach { case (k, v) =>
-      headers.put(Key.of(k, ASCII_STRING_MARSHALLER), v)
-    }
-    headers
-  }
+  // private[internal] def tracingKernelToHeaders(kernel: Kernel): Metadata = {
+  //   val headers = new Metadata()
+  //   kernel.toHeaders.foreach { case (k, v) =>
+  //     headers.put(Key.of(k, ASCII_STRING_MARSHALLER), v)
+  //   }
+  //   headers
+  // }
 
 }

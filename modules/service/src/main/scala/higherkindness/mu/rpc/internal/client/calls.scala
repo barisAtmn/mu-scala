@@ -16,16 +16,16 @@
 
 package higherkindness.mu.rpc.internal.client
 
-import cats.data.Kleisli
-import cats.syntax.flatMap._
-import cats.effect.{ContextShift, Effect}
+// import cats.data.Kleisli
+import cats.effect.kernel.Async
+// import cats.syntax.flatMap._
 import io.grpc.stub.ClientCalls
 import io.grpc.{CallOptions, Channel, Metadata, MethodDescriptor}
-import natchez.Span
+// import natchez.Span
 
 object calls {
 
-  def unary[F[_]: Effect: ContextShift, Req, Res](
+  def unary[F[_]: Async, Req, Res](
       request: Req,
       descriptor: MethodDescriptor[Req, Res],
       channel: Channel,
@@ -40,19 +40,19 @@ object calls {
         )
     )
 
-  def tracingUnary[F[_]: Effect: ContextShift, Req, Res](
-      request: Req,
-      descriptor: MethodDescriptor[Req, Res],
-      channel: Channel,
-      options: CallOptions
-  ): Kleisli[F, Span[F], Res] =
-    Kleisli[F, Span[F], Res] { parentSpan =>
-      parentSpan.span(descriptor.getFullMethodName()).use { span =>
-        span.kernel.flatMap { kernel =>
-          val headers = tracingKernelToHeaders(kernel)
-          unary[F, Req, Res](request, descriptor, channel, options, headers)
-        }
-      }
-    }
+  // def tracingUnary[F[_]: Effect: ContextShift, Req, Res](
+  //     request: Req,
+  //     descriptor: MethodDescriptor[Req, Res],
+  //     channel: Channel,
+  //     options: CallOptions
+  // ): Kleisli[F, Span[F], Res] =
+  //   Kleisli[F, Span[F], Res] { parentSpan =>
+  //     parentSpan.span(descriptor.getFullMethodName()).use { span =>
+  //       span.kernel.flatMap { kernel =>
+  //         val headers = tracingKernelToHeaders(kernel)
+  //         unary[F, Req, Res](request, descriptor, channel, options, headers)
+  //       }
+  //     }
+  //   }
 
 }

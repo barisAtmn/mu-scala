@@ -170,7 +170,17 @@ class OperationModels[C <: Context](val c: C) {
         case Some(RequestStreaming)       => method("clientStreaming")
         case Some(ResponseStreaming)      => method("serverStreaming")
         case Some(BidirectionalStreaming) => method("bidiStreaming")
-        case None                         => method("unary")
+        case None =>
+          q"""
+          def $name(input: $reqType): $wrappedRespType =
+            _root_.higherkindness.mu.rpc.internal.client.calls.unary[$F, $reqElemType, $respElemType](
+              input,
+              $methodDescriptorName.$methodDescriptorValName,
+              channel,
+              options,
+              dispatcher
+            )
+          """
       }
     }
 
@@ -279,7 +289,8 @@ class OperationModels[C <: Context](val c: C) {
         q"""
         _root_.higherkindness.mu.rpc.internal.server.handlers.unary[$F, $reqElemType, $respElemType](
           algebra.$name,
-          $compressionTypeTree
+          $compressionTypeTree,
+          dispatcher
         )
         """
       case _ =>

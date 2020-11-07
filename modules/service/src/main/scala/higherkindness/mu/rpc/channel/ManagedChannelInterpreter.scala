@@ -18,7 +18,7 @@ package higherkindness.mu.rpc.channel
 
 import higherkindness.mu.rpc._
 
-import cats.effect.{Effect, Resource, Sync}
+import cats.effect.kernel.{Resource, Sync}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 
@@ -59,8 +59,8 @@ class ManagedChannelInterpreter[F[_]](
     } yield built
   }
 
-  def unsafeBuild[T <: ManagedChannelBuilder[T]](implicit E: Effect[F]): ManagedChannel =
-    E.toIO(build).unsafeRunSync()
+  // def unsafeBuild[T <: ManagedChannelBuilder[T]](implicit E: Effect[F]): ManagedChannel =
+  //   E.to[IO](build).unsafeRunSync()
 
   def resource[T <: ManagedChannelBuilder[T]]: Resource[F, ManagedChannel] =
     Resource.make(build)(c => F.delay(c.shutdown()).void)

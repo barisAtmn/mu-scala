@@ -50,12 +50,12 @@ object ProjectPlugin extends AutoPlugin {
 
     lazy val rpcServiceSettings: Seq[Def.Setting[_]] = Seq(
       libraryDependencies ++= Seq(
-        "org.typelevel"          %% "cats-effect"             % V.catsEffect,
+        "org.typelevel"          %% "cats-effect-std"         % "3.0.0-M2",
         "com.47deg"              %% "pbdirect"                % V.pbdirect,
         "com.beachape"           %% "enumeratum"              % V.enumeratum,
         "com.sksamuel.avro4s"    %% "avro4s-core"             % V.avro4s,
         "org.log4s"              %% "log4s"                   % V.log4s,
-        "org.tpolecat"           %% "natchez-core"            % V.natchez,
+        // "org.tpolecat"           %% "natchez-core"            % V.natchez,
         "org.scala-lang.modules" %% "scala-collection-compat" % V.scalaCollectionCompat,
         "io.grpc"                 % "grpc-stub"               % V.grpc
       ),
